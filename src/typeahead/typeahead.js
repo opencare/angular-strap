@@ -336,6 +336,7 @@ angular.module('mgcrea.ngStrap.typeahead', ['mgcrea.ngStrap.tooltip', 'mgcrea.ng
           }
           var index = typeahead.$getIndex(controller.$modelValue);
           var selected = index !== -1 ? typeahead.$scope.$matches[index].label : controller.$viewValue;
+          // To support objects such as the result of $sce.trustAsHtml
           if (angular.isObject(selected) && !parsedOptions.displayValue(selected) && angular.isFunction(selected.toString)) {
             selected = selected.toString();
           }
