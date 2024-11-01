@@ -25,6 +25,7 @@ angular.module('mgcrea.ngStrap.modal', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap.h
     };
 
     this.$get = function ($window, $rootScope, $bsCompiler, $animate, $timeout, $sce, dimensions) {
+      const MAX_CLICK_DRAG_DISTANCE = 16;
 
       var forEach = angular.forEach;
       var requestAnimationFrame = $window.requestAnimationFrame || $window.setTimeout;
@@ -294,7 +295,8 @@ angular.module('mgcrea.ngStrap.modal', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap.h
 
         function bindBackdropEvents () {
           if (options.backdrop) {
-            modalElement.on('click', hideOnBackdropClick);
+            modalElement.on('mousedown', modalDragStart);
+            modalElement.on('mouseup', modalDragEnd);
             backdropElement.on('click', hideOnBackdropClick);
             backdropElement.on('wheel', preventEventDefault);
           }
@@ -302,7 +304,8 @@ angular.module('mgcrea.ngStrap.modal', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap.h
 
         function unbindBackdropEvents () {
           if (options.backdrop) {
-            modalElement.off('click', hideOnBackdropClick);
+            modalElement.off('mousedown', modalDragStart);
+            modalElement.off('mouseup', modalDragEnd);
             backdropElement.off('click', hideOnBackdropClick);
             backdropElement.off('wheel', preventEventDefault);
           }
@@ -321,6 +324,47 @@ angular.module('mgcrea.ngStrap.modal', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap.h
         }
 
         // Private helpers
+
+        function modalDragStart(event) {
+          if (event.target !== event.currentTarget) {
+            return;
+          }
+
+          $modal.dragging = true;
+          $modal.dragStartX = event.pageX;
+          $modal.dragStartY = event.pageY;
+        }
+        function modalDragEnd(event) {
+          if (!$modal.dragging) {
+            return;
+          }
+
+          // Set dragging to false anytime the mouse is released
+          $modal.dragging = false;
+
+          // Only close the modal if this event is targetting the
+          // element that the event is registered on
+          if (event.target !== event.currentTarget) {
+            return;
+          }
+
+          const dragDistanceX = event.pageX - $modal.dragStartX;
+          const dragDistanceY = event.pageY - $modal.dragStartY;
+
+          const distance = Math.sqrt(
+            Math.pow(dragDistanceX, 2) +
+            Math.pow(dragDistanceY, 2)
+          );
+
+          if (Math.abs(distance) < MAX_CLICK_DRAG_DISTANCE) {
+            if (options.backdrop === 'static') {
+              $modal.focus();
+              return;
+            }
+
+            $modal.hide();
+          }
+        }
 
         function hideOnBackdropClick (evt) {
           if (evt.target !== evt.currentTarget) return;
